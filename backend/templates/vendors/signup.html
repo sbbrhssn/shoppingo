@@ -1,74 +1,139 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-
+<!DOCTYPE html>
+<html>
+<head>
     <title>Vendor Signup</title>
-  </head>
-  <body>
-    <h1>Please fill up the form to signup as a vendor</h1>
-    <form>
-  <div class="form-row">
-    <div class="form-group">
-      <label for="inputFirstName">First Name</label>
-      <input type="text" class="form-control" placeholder="First name">
+</head>
+<body>
+<form id="vendorSignupForm">
+    {% csrf_token %}
+    <div class="form-row">
+        <div class="form-group">
+            <label>First Name</label>
+            <input type="text" name="first_name" class="form-control" placeholder="First name">
+        </div>
+        <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" name="last_name" class="form-control" placeholder="Last name">
+        </div>
+        <div class="form-group">
+            <label>Shop Name</label>
+            <input type="text" name="shop_name" class="form-control" placeholder="Shop name">
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" class="form-control" placeholder="Email">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" class="form-control" placeholder="Password">
+        </div>
+        <div class="form-group">
+            <label>Phone Number</label>
+            <input type="text" name="phone_number" class="form-control" placeholder="Phone number">
+        </div>
     </div>
     <div class="form-group">
-      <label for="inputLastName">Last Name</label>
-      <input type="text" class="form-control" placeholder="Last name">
+        <label>Address 1</label>
+        <input type="text" name="address_1" class="form-control" placeholder="Address 1">
     </div>
-    <div class="form-group col-md-6">
-      <label for="inputEmail4">Email</label>
-      <input type="email" class="form-control" id="inputEmail4" placeholder="Email">
+    <div class="form-group">
+        <label>Address 2</label>
+        <input type="text" name="address_2" class="form-control" placeholder="Apartment, studio, or floor">
     </div>
-    <div class="form-group col-md-6">
-      <label for="inputPassword4">Password</label>
-      <input type="password" class="form-control" id="inputPassword4" placeholder="Password">
+    <div class="form-row">
+        <div class="form-group">
+            <label>District</label>
+            <input type="text" id="districtSearch" class="form-control" placeholder="Search district...">
+            <ul id="districtDropdown" style="display:none; list-style:none; border:1px solid #ccc; padding:0; margin:0;"></ul>
+            <input type="hidden" name="district" id="districtId">
+        </div>
+        <div class="form-group">
+            <label>Subdistrict</label>
+            <select name="subdistrict" id="subdistrictSelect" class="form-control">
+                <option value="">Select subdistrict...</option>
+            </select>
+        </div>
     </div>
-  </div>
-  <div class="form-group">
-    <label for="inputAddress">Address</label>
-    <input type="text" class="form-control" id="inputAddress" placeholder="1234 Main St">
-  </div>
-  <div class="form-group">
-    <label for="inputAddress2">Address 2</label>
-    <input type="text" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor">
-  </div>
-  <div class="form-row">
-    <div class="form-group col-md-6">
-      <label for="inputCity">City</label>
-      <input type="text" class="form-control" id="inputCity">
-    </div>
-    <div class="form-group col-md-4">
-      <label for="inputState">State</label>
-      <select id="inputState" class="form-control">
-        <option selected>Choose...</option>
-        <option>...</option>
-      </select>
-    </div>
-    <div class="form-group col-md-2">
-      <label for="inputZip">Zip</label>
-      <input type="text" class="form-control" id="inputZip">
-    </div>
-  </div>
-  <div class="form-group">
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" id="gridCheck">
-      <label class="form-check-label" for="gridCheck">
-        Check me out
-      </label>
-    </div>
-  </div>
-  <button type="submit" class="btn btn-primary">Sign in</button>
+    <button type="submit" class="btn btn-primary">Sign up</button>
 </form>
 
+<script>
+    const districtSearch = document.getElementById('districtSearch');
+    const districtDropdown = document.getElementById('districtDropdown');
+    const districtId = document.getElementById('districtId');
+    const subdistrictSelect = document.getElementById('subdistrictSelect');
 
+    districtSearch.addEventListener('input', async function () {
+        const search = this.value;
+        if (search.length < 1) {
+            districtDropdown.style.display = 'none';
+            return;
+        }
+        const response = await fetch(`/vendors/districts/?search=${search}`);
+        const districts = await response.json();
+        districtDropdown.innerHTML = '';
+        districts.forEach(d => {
+            const li = document.createElement('li');
+            li.textContent = d.name;
+            li.style.padding = '8px';
+            li.style.cursor = 'pointer';
+            li.addEventListener('click', function () {
+                districtSearch.value = d.name;
+                districtId.value = d.id;
+                districtDropdown.style.display = 'none';
+                loadSubdistricts(d.id);
+            });
+            districtDropdown.appendChild(li);
+        });
+        districtDropdown.style.display = 'block';
+    });
 
+    async function loadSubdistricts(id) {
+        const response = await fetch(`/vendors/districts/${id}/subdistricts/`);
+        const subdistricts = await response.json();
+        subdistrictSelect.innerHTML = '<option value="">Select subdistrict...</option>';
+        subdistricts.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.textContent = s.name;
+            subdistrictSelect.appendChild(option);
+        });
+    }
 
-  </body>
+    document.getElementById('vendorSignupForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        document.querySelectorAll('.error-msg').forEach(el => el.remove());
+
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        const response = await fetch('/vendors/signup/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+            },
+            body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Signup successful!');
+        } else {
+            Object.keys(result).forEach(field => {
+                const input = document.querySelector(`[name="${field}"]`);
+                if (input) {
+                    const error = document.createElement('small');
+                    error.className = 'error-msg';
+                    error.style.color = 'red';
+                    error.textContent = result[field][0];
+                    input.parentNode.appendChild(error);
+                }
+            });
+        }
+    });
+</script>
+</body>
 </html>

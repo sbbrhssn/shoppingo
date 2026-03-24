@@ -12,6 +12,10 @@ class SubdistrictSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'district']
 
 class VendorSignupSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        min_length=8,
+        error_messages={'min_length': 'Password must be at least 8 characters.'}
+    )
     class Meta:
         model = Vendor
         fields = [
@@ -29,6 +33,6 @@ class VendorSignupSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'password': {'write_only': True},
         }
-    def create (self, validate_data):
-        vendor = Vendor.objects.create(**validate_data)
+    def create (self, validated_data):
+        vendor = Vendor.objects.create(**validated_data)
         return vendor
